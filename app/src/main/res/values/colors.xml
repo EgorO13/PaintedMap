@@ -6,5 +6,10 @@
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
+
     <color name="white">#FFFFFFFF</color>
+    <color name="logo_center_light">#8FB3E2</color>
+    <color name="logo_ring_middle">#4A6BA8</color>
+    <color name="logo_background_dark">#192338</color>
+    
 </resources>
