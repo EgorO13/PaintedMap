@@ -1,6 +1,5 @@
 package com.paintedmap.ui.screens.map
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,7 +62,7 @@ fun MapScreen(
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         RussiaMap(
-            modifier = Modifier.fillMaxWidth().fillMaxHeight(0.55f).padding(horizontal = Dimens.sm),
+            modifier = Modifier.fillMaxWidth().fillMaxHeight(0.45f).padding(horizontal = Dimens.sm),
             visitedRegions = state.userRegionsSet,
             circuitedRegion = state.selectedRegionForCircuit
         )
@@ -78,9 +77,8 @@ fun MapScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = Dimens.sm)
-                    .animateContentSize()
                     .height(
-                        if (state.showRegions) Dimens.profileBarHeight * 3f
+                        if (state.showRegions) Dimens.mapGlassHeight * 1.5f
                         else Dimens.mapGlassHeight
                     ),
                 shape = MaterialTheme.shapes.medium,

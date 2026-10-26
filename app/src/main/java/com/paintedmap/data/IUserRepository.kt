@@ -1,6 +1,6 @@
 package com.paintedmap.data
 
 interface IUserRepository {
-    fun findById(id: Int): User?
-    fun findByNickname(nickname: String): User?
+    fun findById(userId: Int): User?
+    fun findByNickname(userNickName: String): User?
 }

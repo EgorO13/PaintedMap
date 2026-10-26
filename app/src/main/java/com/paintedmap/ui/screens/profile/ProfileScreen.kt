@@ -72,13 +72,13 @@ fun ProfileScreen(
         columns = GridCells.Fixed(2),
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
-            start = Dimens.xs,
-            end = Dimens.xs,
-            top = Dimens.xs,
-            bottom = innerPadding.calculateBottomPadding() + Dimens.xs
+            start = Dimens.md,
+            end = Dimens.md,
+            top = Dimens.md,
+            bottom = innerPadding.calculateBottomPadding() + Dimens.md
         ),
-        horizontalArrangement = Arrangement.spacedBy(Dimens.xs),
-        verticalArrangement = Arrangement.spacedBy(Dimens.xs)
+        horizontalArrangement = Arrangement.spacedBy(Dimens.md),
+        verticalArrangement = Arrangement.spacedBy(Dimens.md)
     ) {
         item(
             span = { GridItemSpan(maxLineSpan) }
@@ -86,7 +86,7 @@ fun ProfileScreen(
             GlassPanel(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(136.dp),
+                    .height(Dimens.profileBarHeight),
                 color = MaterialTheme.colorScheme.primary
             ) {
                 ProfileBar(state)

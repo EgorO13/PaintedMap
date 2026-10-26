@@ -26,12 +26,12 @@ object Dimens {
     val statSpacerWeight: Float = 0.15f
     val statContentWeight: Float = 0.7f
 
-    val statTrackThickness: Dp @Composable get() = (10 * scale).dp
+    val statTrackThickness: Dp @Composable get() = (20 * scale).dp
     val statIndicatorWidth: Dp @Composable get() = (40 * scale).dp
     val statLabelAlpha: Float = 0.6f
 
-    val profileBarHeight: Dp @Composable get() = (120 * scale).dp
-    val mapGlassHeight: Dp @Composable get() = (220 * scale).dp
+    val profileBarHeight: Dp @Composable get() = (160 * scale).dp
+    val mapGlassHeight: Dp @Composable get() = (270 * scale).dp
     val navigationBarHeight: Dp @Composable get() = (80 * scale).dp
     val searchBarHeight: Dp @Composable get() = (56 * scale).dp
     val regionsHeight: Dp @Composable get() = (72 * scale).dp

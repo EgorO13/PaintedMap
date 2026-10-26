@@ -69,7 +69,7 @@ fun StatisticsContent(
                     modifier = Modifier
                         .padding(horizontal = Dimens.xs)
                         .aspectRatio(1f),
-                    contentDescription = "Statistic/Regions button",
+                    contentDescription = "Regions button",
                     containerColor = MaterialTheme.colorScheme.primary,
                     iconColor = MaterialTheme.colorScheme.onSurface
                 )

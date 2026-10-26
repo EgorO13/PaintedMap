@@ -154,12 +154,18 @@ fun AddRegionDialog(
         title = { Text(text = "Добавление поездки: ${region.name}") },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text("Подтвердить")
+                Text(
+                    text = "Подтвердить",
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Отмена")
+                Text(
+                    text = "Отмена",
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
         }
     )
