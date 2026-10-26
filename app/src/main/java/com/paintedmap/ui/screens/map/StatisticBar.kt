@@ -6,13 +6,15 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,47 +22,59 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
-import com.paintedmap.ui.theme.Black
+import com.paintedmap.ui.screens.map.MapAction
 import com.paintedmap.ui.theme.Dimens
-import com.paintedmap.ui.theme.White
 import kotlin.math.roundToInt
 
 @Composable
 fun StatisticsContent(
     now: Int,
     total: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onAction: (MapAction) -> Unit
 ) {
     val percent = if (total > 0) (now.toFloat() / total * 100f).roundToInt() else 0
     val progress = if (total > 0) now.toFloat() / total else 0f
 
-    val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
-    val underBarColor = if (isDark) {
-        lerp(start = MaterialTheme.colorScheme.surface.copy(alpha = 0.1f), Black, Dimens.statTrackBlendFraction)
-    } else lerp(MaterialTheme.colorScheme.surface.copy(alpha = 0.2f), White, Dimens.statTrackBlendFraction)
+    val underBarColor = MaterialTheme.colorScheme.outline
     val arcColor = MaterialTheme.colorScheme.onSurface
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(Dimens.md),
+            .padding(Dimens.sm),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Статистика",
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontSize = Dimens.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            ),
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = Dimens.sm)
-        )
+        Row (modifier = Modifier.padding(bottom = Dimens.sm)) {
+            Text(
+                text = "Статистика",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontSize = Dimens.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                ),
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(5f)
+            )
+
+            Box (
+                modifier = Modifier.weight(1f),
+            ) {
+                ActionButton(
+                    onClick = { onAction(MapAction.AddRegionButtonClicked) },
+                    icon = Icons.Default.Add,
+                    modifier = Modifier
+                        .padding(horizontal = Dimens.xs)
+                        .aspectRatio(1f),
+                    contentDescription = "Statistic/Regions button",
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    iconColor = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.weight(Dimens.statSpacerWeight))
 
@@ -86,14 +100,12 @@ fun StatisticsContent(
             ) {
                 Box(modifier = Modifier.fillMaxWidth()) {
                     Box(
-                        modifier = Modifier
-                            .padding(start = indicatorStartPadding)
-                            .width(Dimens.statIndicatorWidth),
+                        modifier = Modifier.padding(start = indicatorStartPadding),
                         contentAlignment = Alignment.Center
                     ) {
                         BasicText(
                             text = "$now",
-                            style = MaterialTheme.typography.bodyLarge.copy(
+                            style = MaterialTheme.typography.titleMedium.copy(
                                 color = MaterialTheme.colorScheme.onSurface,
                                 fontWeight = FontWeight.Bold
                             ),
@@ -173,7 +185,7 @@ fun StatisticsContent(
         Spacer(modifier = Modifier.weight(Dimens.statSpacerWeight))
 
         BasicText(
-            text = "Посещено $percent% регионов России",
+            text = "Вы посетили $percent% регионов России",
             style = MaterialTheme.typography.bodyLarge.copy(
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,

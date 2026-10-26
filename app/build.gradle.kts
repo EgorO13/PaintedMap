@@ -44,6 +44,7 @@ dependencies {
     implementation("dev.chrisbanes.haze:haze:1.1.1")
     implementation("androidx.compose.material:material-icons-extended")
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.compose.foundation.layout)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.remote.creation.core)

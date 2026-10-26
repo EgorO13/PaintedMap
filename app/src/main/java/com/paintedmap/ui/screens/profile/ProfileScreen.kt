@@ -1,10 +1,10 @@
-package com.paintedmap.ui.screens
+package com.paintedmap.ui.screens.profile
 
 import android.content.Intent
-import com.paintedmap.ui.components.SearchBar
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,50 +19,59 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.paintedmap.data.User
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.paintedmap.data.IUserRepository
 import com.paintedmap.ui.components.ActionButton
 import com.paintedmap.ui.components.GlassPanel
+import com.paintedmap.ui.components.SearchBar
 import com.paintedmap.ui.theme.Dimens
 
 @Composable
-fun ProfileScreen(
-    user: User,
-    innerPadding: androidx.compose.foundation.layout.PaddingValues
+fun ProfileScreenContainer(
+    userId: Int,
+    innerPadding: PaddingValues,
+    userRepository: IUserRepository
 ) {
-    var search by remember { mutableStateOf("") }
-    val subscriptions = remember {
-        listOf(
-            "Name 1", "Name 2", "Name 3", "Name 4", "Name 5",
-            "Evelina", "Name 7", "Name 8", "Name 9", "Name 10",
-            "Name 11", "Name 12", "Name 13", "Name 14", "Name 15"
-        )
-    }
-
-    val filteredSubscriptions = remember(search, subscriptions) {
-        subscriptions.filter {
-            it.contains(search, ignoreCase = true)
+    val viewModel: ProfileViewModel = viewModel(
+        factory = viewModelFactory {
+            initializer {
+                ProfileViewModel(userId, userRepository)
+            }
         }
-    }
+    )
 
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    ProfileScreen(
+        innerPadding = innerPadding,
+        state = state,
+        onAction = viewModel::onAction
+    )
+}
+
+@Composable
+fun ProfileScreen(
+    innerPadding: PaddingValues,
+    state: ProfileUiState,
+    onAction: (ProfileAction) -> Unit
+) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = Modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+        contentPadding = PaddingValues(
             start = Dimens.xs,
             end = Dimens.xs,
             top = Dimens.xs,
@@ -71,7 +80,7 @@ fun ProfileScreen(
         horizontalArrangement = Arrangement.spacedBy(Dimens.xs),
         verticalArrangement = Arrangement.spacedBy(Dimens.xs)
     ) {
-        item (
+        item(
             span = { GridItemSpan(maxLineSpan) }
         ) {
             GlassPanel(
@@ -80,7 +89,7 @@ fun ProfileScreen(
                     .height(136.dp),
                 color = MaterialTheme.colorScheme.primary
             ) {
-                ProfileBar(user)
+                ProfileBar(state)
             }
         }
 
@@ -93,26 +102,27 @@ fun ProfileScreen(
                 alpha = 1f
             ) {
                 SearchBar(
-                    search = search,
-                    onSearchChange = { search = it }
+                    search = state.search,
+                    onSearchChange = { text ->
+                        onAction(ProfileAction.SearchAuthorChanged(text))
+                    }
                 )
             }
         }
 
-        itemsIndexed(filteredSubscriptions) { _, subscription ->
+        itemsIndexed(state.userAuthorsList) { _, subscription ->
             GlassPanel(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f),
-                //shape = MaterialTheme.shapes.large,
                 color = lerp(MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.background, 0.5f),
-                ) {
+            ) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = subscription,
+                        text = subscription.name,
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -123,7 +133,7 @@ fun ProfileScreen(
 }
 
 @Composable
-fun ProfileBar(user: User) {
+fun ProfileBar(state: ProfileUiState) {
     val context = LocalContext.current
 
     Column(
@@ -139,26 +149,24 @@ fun ProfileBar(user: User) {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = user.userName,
+                    text = state.userName,
                     style = MaterialTheme.typography.headlineLarge,
                     color = MaterialTheme.colorScheme.onPrimary,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
-                    //overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
                 Text(
-                    text = "@${user.userNickName}",
+                    text = "@${state.userNickName}",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
                     maxLines = 1,
-                    //overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
             }
 
             ActionButton(
                 modifier = Modifier.size(44.dp),
                 onClick = {
-                    val link = "paintedmap://user/${user.userId}"
+                    val link = "paintedmap://user/${state.userId}"
                     val shareIntent = Intent(Intent.ACTION_SEND).apply {
                         type = "text/plain"
                         putExtra(Intent.EXTRA_TEXT, link)
@@ -182,7 +190,7 @@ fun ProfileBar(user: User) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "67",
+                    text = state.userRegionsAmount.toString(),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onPrimary,
                     fontWeight = FontWeight.Bold
@@ -200,7 +208,7 @@ fun ProfileBar(user: User) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "123.4k",
+                    text = state.userSubAmount.toString(),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onPrimary,
                     fontWeight = FontWeight.Bold
@@ -218,7 +226,7 @@ fun ProfileBar(user: User) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "113",
+                    text = state.userAuthorsAmount.toString(),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onPrimary,
                     fontWeight = FontWeight.Bold

@@ -8,7 +8,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -30,10 +29,9 @@ import com.paintedmap.data.ScreensEnum
 import com.paintedmap.data.UserRepository
 import com.paintedmap.ui.components.NavigationContent
 import com.paintedmap.ui.screens.ErrorScreen
-import com.paintedmap.ui.screens.MapScreen
-import com.paintedmap.ui.screens.ProfileScreen
 import com.paintedmap.ui.screens.SettingsScreen
-import com.paintedmap.ui.theme.Dimens
+import com.paintedmap.ui.screens.map.MapScreenContainer
+import com.paintedmap.ui.screens.profile.ProfileScreenContainer
 import com.paintedmap.ui.theme.PaintedMapTheme
 
 private object Routes {
@@ -171,7 +169,10 @@ private fun PaintedMapApp(
             modifier = Modifier.fillMaxSize().statusBarsPadding()
         ) {
             composable(Routes.Map) {
-                MapScreen(innerPadding = innerPadding)
+                MapScreenContainer(
+                    innerPadding = innerPadding,
+                    userRepository = userRepository
+                )
             }
 
             composable(
@@ -188,10 +189,13 @@ private fun PaintedMapApp(
                 )
             ) { entry ->
                 val userId = entry.arguments?.getInt("userId")
-                val user = userId?.let { userRepository.findById(it) }
 
-                if (user != null) {
-                    ProfileScreen(user = user, innerPadding = innerPadding)
+                if (userId != null) {
+                    ProfileScreenContainer(
+                        userId = userId,
+                        innerPadding = innerPadding,
+                        userRepository = userRepository
+                    )
                 } else {
                     LaunchedEffect(userId) {
                         Toast.makeText(
