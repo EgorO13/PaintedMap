@@ -4,7 +4,10 @@ data class User(
     val userNickName: String,
     val userId: Int,
     val userName: String,
-    private val regions: MutableSet<RegionEntry>,
+    val userSubs: MutableSet<Int>,
+    val userAuthors: MutableSet<Int>,
+
+    private val userRegions: MutableSet<RegionEntry>,
 ) {
     init {
         require(userId > 0)
@@ -13,14 +16,40 @@ data class User(
     }
 
     fun addRegion(region: RegionEntry) {
-        regions.add(region)
+        userRegions.add(region)
     }
 
     fun amountOfRegions() : Int {
-        return regions.size
+        return userRegions.size
     }
 
-    fun getRegions() : MutableSet<RegionEntry> {
-        return regions
+    fun getRegions() : Set<RegionEntry> {
+        return userRegions
+    }
+
+
+    fun addAuthor(id: Int) {
+        userAuthors.add(id)
+    }
+
+    fun amountOfAuthors() : Int {
+        return userAuthors.size
+    }
+
+    fun getAuthors() : Set<Int> {
+        return userAuthors
+    }
+
+
+    fun addSub(id: Int) {
+        userSubs.add(id)
+    }
+
+    fun amountOfSubs() : Int {
+        return userSubs.size
+    }
+
+    fun getSubs() : Set<Int> {
+        return userSubs
     }
 }

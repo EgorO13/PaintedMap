@@ -3,70 +3,74 @@ package com.paintedmap
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
-import androidx.navigation.navDeepLink
-import com.paintedmap.data.ScreensEnum
+import androidx.core.net.toUri
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.NavEntryDecorator
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.deeplink.DeepLinkRequest
+import androidx.navigation3.runtime.deeplink.UriDeepLinkMatcher
+import androidx.navigation3.runtime.deeplink.withBackStack
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.ui.NavDisplay
 import com.paintedmap.data.UserRepository
 import com.paintedmap.ui.components.NavigationContent
 import com.paintedmap.ui.screens.ErrorScreen
-import com.paintedmap.ui.screens.MapScreen
-import com.paintedmap.ui.screens.ProfileScreen
 import com.paintedmap.ui.screens.SettingsScreen
-import com.paintedmap.ui.theme.Dimens
+import com.paintedmap.ui.screens.map.MapScreenContainer
+import com.paintedmap.ui.screens.profile.ProfileScreenContainer
 import com.paintedmap.ui.theme.PaintedMapTheme
-
-private object Routes {
-    const val Map = "map"
-    const val Profile = "profile/{userId}"
-    const val Settings = "settings"
-    const val Error = "error"
-
-    fun profile(userId: Int) = "profile/$userId"
-}
+import kotlinx.serialization.serializer
 
 class MainActivity : ComponentActivity() {
 
-    private var pendingDeepLink by mutableStateOf<Intent?>(null)
+    private val profileDeepLinkMatcher = UriDeepLinkMatcher(
+        uriPattern = "paintedmap://user/{userId}".toUri(),
+        serializer = serializer<ScreenKey.Profile>()
+    ).withBackStack { match ->
+        listOf(ScreenKey.Map, match.key)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d("MainActivity", "onCreate")
-
         enableEdgeToEdge()
 
-        if (savedInstanceState == null) {
-            pendingDeepLink = intent.takeIf { it.data != null }
+        val initialStack: List<NavKey> = if (intent?.data != null) {
+            val request = DeepLinkRequest(uri = intent.data)
+            profileDeepLinkMatcher.match(request)?.backStack ?: listOf(ScreenKey.Map)
+        } else {
+            listOf(ScreenKey.Map)
         }
 
         setContent {
             PaintedMapTheme {
-                PaintedMapApp(
-                    deepLinkIntent = pendingDeepLink,
-                    onDeepLinkHandled = {
-                        pendingDeepLink = null
+                val backStack = rememberNavBackStack(*initialStack.toTypedArray())
+
+                LaunchedEffect(intent) {
+                    if (intent?.data != null) {
+                        val newRequest = DeepLinkRequest(uri = intent.data)
+                        profileDeepLinkMatcher.match(newRequest)?.backStack?.let { newStack ->
+                            backStack.clear()
+                            backStack.addAll(newStack)
+                        }
                     }
-                )
+                }
+                PaintedMapApp(backStack = backStack)
             }
         }
     }
@@ -98,132 +102,125 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        Log.d("MainActivity", "onNewIntent: ${intent.data}")
         setIntent(intent)
-        pendingDeepLink = intent.takeIf { it.data != null }
     }
 }
 
+class InsetsPaddingDecorator : NavEntryDecorator<NavKey>(
+    decorate = { entry ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+        ) {
+            entry.Content()
+        }
+    }
+)
+
 @Composable
 private fun PaintedMapApp(
-    deepLinkIntent: Intent?,
-    onDeepLinkHandled: () -> Unit
+    backStack: NavBackStack<NavKey>
 ) {
-    val navController = rememberNavController()
-    val context = LocalContext.current
     val userRepository = remember { UserRepository() }
+    val currentKey = backStack.lastOrNull() ?: ScreenKey.Map
+    val insetsDecorator = remember { InsetsPaddingDecorator() }
 
-    val backStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = backStackEntry?.destination?.route
-
-    LaunchedEffect(deepLinkIntent) {
-        val intent = deepLinkIntent ?: return@LaunchedEffect
-        val uri = intent.data
-
-        if (uri == null) {
-            onDeepLinkHandled()
-            return@LaunchedEffect
-        }
-
-        val handled = navController.handleDeepLink(intent)
-
-        if (!handled) {
-            Toast.makeText(
-                context,
-                "Incorrect link",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
-
-        onDeepLinkHandled()
-    }
+    val savedProfileIds = rememberSaveable { mutableStateListOf<Int>(1) }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
             NavigationContent(
-                currentScreen = when (currentRoute) {
-                    Routes.Profile -> ScreensEnum.Profile
-                    Routes.Settings -> ScreensEnum.Settings
-                    else -> ScreensEnum.Map
-                },
+                currentKey = currentKey as ScreenKey,
                 onMapClick = {
-                    navController.navigate(Routes.Map) {
-                        launchSingleTop = true
+                    if (currentKey != ScreenKey.Map) {
+                        backStack.add(ScreenKey.Map)
                     }
                 },
                 onProfileClick = {
-                    navController.navigate(Routes.profile(1)) {
-                        launchSingleTop = true
+                    if (currentKey !is ScreenKey.Profile) {
+                        savedProfileIds.forEach { id ->
+                            backStack.add(ScreenKey.Profile(userId = id))
+                        }
+                    } else if (currentKey != ScreenKey.Profile(userId = 1)) {
+                        savedProfileIds.clear()
+                        savedProfileIds.add(1)
+                        backStack.add(ScreenKey.Profile(userId = 1))
                     }
                 },
                 onSettingsClick = {
-                    navController.navigate(Routes.Settings) {
-                        launchSingleTop = true
+                    if (currentKey != ScreenKey.Settings) {
+                        backStack.add(ScreenKey.Settings)
                     }
                 }
             )
         }
     ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = Routes.Map,
-            modifier = Modifier.fillMaxSize().statusBarsPadding()
-        ) {
-            composable(Routes.Map) {
-                MapScreen(innerPadding = innerPadding)
-            }
-
-            composable(
-                route = Routes.Profile,
-                arguments = listOf(
-                    navArgument("userId") {
-                        type = NavType.IntType
+        NavDisplay(
+            backStack = backStack,
+            onBack = {
+                if (backStack.lastOrNull() is ScreenKey.Profile) {
+                    if (backStack.size > 1 && backStack[backStack.size - 2] is ScreenKey.Profile) {
+                            backStack.removeLastOrNull()
+                            savedProfileIds.removeLastOrNull()
+                    } else {
+                        backStack.clear()
+                        backStack.add(ScreenKey.Map)
                     }
-                ),
-                deepLinks = listOf(
-                    navDeepLink {
-                        uriPattern = "paintedmap://user/{userId}"
+                } else if (backStack.lastOrNull() is ScreenKey.Map) {
+                    if (backStack.size > 1) {
+                        backStack.removeLastOrNull()
                     }
-                )
-            ) { entry ->
-                val userId = entry.arguments?.getInt("userId")
-                val user = userId?.let { userRepository.findById(it) }
-
-                if (user != null) {
-                    ProfileScreen(user = user, innerPadding = innerPadding)
+                } else if (backStack.lastOrNull() is ScreenKey.Settings) {
+                    backStack.clear()
+                    backStack.add(ScreenKey.Map)
                 } else {
-                    LaunchedEffect(userId) {
-                        Toast.makeText(
-                            context,
-                            "User not found",
-                            Toast.LENGTH_SHORT
-                        ).show()
-
-                        navController.navigate(Routes.Map) {
-                            popUpTo(Routes.Map) {
-                                inclusive = false
-                            }
-                            launchSingleTop = true
-                        }
+                    backStack.removeLastOrNull()
+                }
+            },
+            entryDecorators = listOf(
+                rememberSaveableStateHolderNavEntryDecorator(),
+                rememberViewModelStoreNavEntryDecorator(),
+                insetsDecorator
+            ),
+            entryProvider = { key ->
+                when (key) {
+                    is ScreenKey.Map -> NavEntry(key) {
+                        MapScreenContainer(
+                            innerPadding = innerPadding,
+                            userRepository = userRepository
+                        )
                     }
+
+                    is ScreenKey.Profile -> NavEntry(key) {
+                        ProfileScreenContainer(
+                            userId = key.userId,
+                            innerPadding = innerPadding,
+                            userRepository = userRepository,
+                            onAuthorNavigate = { selectedAuthorId ->
+                                backStack.add(ScreenKey.Profile(userId = selectedAuthorId))
+                                savedProfileIds.add(selectedAuthorId)
+                            }
+                        )
+                    }
+
+                    is ScreenKey.Settings -> NavEntry(key) {
+                        SettingsScreen()
+                    }
+
+                    is ScreenKey.Error -> NavEntry(key) {
+                        ErrorScreen(
+                            onErrorClick = {
+                                backStack.clear()
+                                backStack.add(ScreenKey.Map)
+                            }
+                        )
+                    }
+
+                    else -> NavEntry(key) {}
                 }
             }
-
-            composable(Routes.Settings) {
-                SettingsScreen()
-            }
-
-            composable(Routes.Error) {
-                ErrorScreen(
-                    onErrorClick = {
-                        navController.navigate(Routes.Map) {
-                            launchSingleTop = true
-                        }
-                    }
-                )
-            }
-        }
+        )
     }
 }
-
