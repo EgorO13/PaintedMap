@@ -19,7 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.paintedmap.data.ScreensEnum
+import com.paintedmap.ScreenKey
 import com.paintedmap.ui.theme.Dimens
 
 @Composable
@@ -27,7 +27,7 @@ fun NavigationContent(
     onProfileClick: () -> Unit,
     onMapClick: () -> Unit,
     onSettingsClick: () -> Unit,
-    currentScreen: ScreensEnum,
+    currentKey: ScreenKey,
     modifier: Modifier = Modifier
 ) {
     val systemNavigationPadding = WindowInsets.navigationBars.asPaddingValues()
@@ -46,9 +46,9 @@ fun NavigationContent(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Dimens.xs)
         ) {
-            val profileColor = if (currentScreen == ScreensEnum.Profile) MaterialTheme.colorScheme.background.copy(alpha = 0.5f) else Color.Transparent
-            val mapColor = if (currentScreen == ScreensEnum.Map) MaterialTheme.colorScheme.background.copy(alpha = 0.5f) else Color.Transparent
-            val settingsColor = if (currentScreen == ScreensEnum.Settings) MaterialTheme.colorScheme.background.copy(alpha = 0.5f) else Color.Transparent
+            val profileColor = if (currentKey is ScreenKey.Profile) MaterialTheme.colorScheme.background.copy(alpha = 0.5f) else Color.Transparent
+            val mapColor = if (currentKey is ScreenKey.Map) MaterialTheme.colorScheme.background.copy(alpha = 0.5f) else Color.Transparent
+            val settingsColor = if (currentKey is ScreenKey.Settings) MaterialTheme.colorScheme.background.copy(alpha = 0.5f) else Color.Transparent
 
             ActionButton(
                 onClick = onProfileClick,

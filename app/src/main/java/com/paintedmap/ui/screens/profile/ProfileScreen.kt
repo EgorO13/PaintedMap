@@ -1,6 +1,7 @@
 package com.paintedmap.ui.screens.profile
 
 import android.content.Intent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,9 +19,11 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -43,9 +47,11 @@ import com.paintedmap.ui.theme.Dimens
 fun ProfileScreenContainer(
     userId: Int,
     innerPadding: PaddingValues,
-    userRepository: IUserRepository
+    userRepository: IUserRepository,
+    onAuthorNavigate: (Int) -> Unit
 ) {
     val viewModel: ProfileViewModel = viewModel(
+        key = userId.toString(),
         factory = viewModelFactory {
             initializer {
                 ProfileViewModel(userId, userRepository)
@@ -55,10 +61,20 @@ fun ProfileScreenContainer(
 
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
+    LaunchedEffect(key1 = userId) {
+        viewModel.onAction(ProfileAction.SearchAuthorChanged(""))
+    }
+
     ProfileScreen(
         innerPadding = innerPadding,
         state = state,
-        onAction = viewModel::onAction
+        onAction = { action ->
+            if (action is ProfileAction.AuthorClicked) {
+                onAuthorNavigate(action.author)
+            } else {
+                viewModel.onAction(action)
+            }
+        }
     )
 }
 
@@ -110,27 +126,94 @@ fun ProfileScreen(
             }
         }
 
-        itemsIndexed(state.userAuthorsList) { _, subscription ->
-            GlassPanel(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f),
-                color = lerp(MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.background, 0.5f),
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
+        // ВОТ ЭТОТ БЛОК КОДА ПОЛНОСТЬЮ ЗАМЕНИЛ СТАРЫЙ ВЫЗОВ itemsIndexed
+        when (val authorsState = state.authorsState) {
+            is AuthorsListState.Loading -> {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Dimens.md),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                    }
+                }
+            }
+            is AuthorsListState.Empty -> {
+                item(span = { GridItemSpan(maxLineSpan) }) {
                     Text(
-                        text = subscription.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface
+                        text = "Тут будут отображаться подписки",
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Dimens.md)
                     )
+                }
+            }
+            is AuthorsListState.EmptySearch -> {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Text(
+                        text = "Пользователь с таким именем не найден",
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Dimens.md)
+                    )
+                }
+            }
+            is AuthorsListState.Base -> {
+                itemsIndexed(authorsState.list) { _, subscription ->
+                    GlassPanel(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f)
+                            .clickable { onAction(ProfileAction.AuthorClicked(subscription.id)) },
+                        color = lerp(MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.background, 0.5f),
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = subscription.name,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+            }
+            is AuthorsListState.Content -> {
+                itemsIndexed(authorsState.list) { _, subscription ->
+                    GlassPanel(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f)
+                            .clickable { onAction(ProfileAction.AuthorClicked(subscription.id)) },
+                        color = lerp(MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.background, 0.5f),
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = subscription.name,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
                 }
             }
         }
     }
 }
+
 
 @Composable
 fun ProfileBar(state: ProfileUiState) {

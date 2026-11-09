@@ -31,7 +31,6 @@ import com.paintedmap.ui.components.GlassPanel
 import com.paintedmap.ui.components.StatisticsContent
 import com.paintedmap.ui.theme.Dimens
 
-
 @Composable
 fun MapScreenContainer(
     innerPadding: PaddingValues,
@@ -82,7 +81,6 @@ fun MapScreen(
                         else Dimens.mapGlassHeight
                     ),
                 shape = MaterialTheme.shapes.medium,
-                //color = MaterialTheme.colorScheme.surface
             ) {
                 if (!state.showRegions) {
                     StatisticsContent(now = state.userRegionsCount, total = state.allRegionsCount, onAction = onAction)
@@ -105,7 +103,6 @@ fun MapScreen(
                         Box(modifier = Modifier.weight(1f)) {
                             AddRegionBar(
                                 searchQuery = state.search,
-                                regions = state.filteredRegions,
                                 onSearchChange = { text ->
                                     onAction(MapAction.SearchRegionChanged(text))
                                 },
@@ -119,7 +116,6 @@ fun MapScreen(
 
             Spacer(modifier = Modifier.height(Dimens.sm))
 
-
             if (state.showAddRegionDialog && state.selectedRegionForAdd != null) {
                 AddRegionDialog(
                     region = state.selectedRegionForAdd,
@@ -130,128 +126,3 @@ fun MapScreen(
         }
     }
 }
-//
-//@Composable
-//private fun RegionsContent(
-//    showSearch: Boolean,
-//    searchQuery: String,
-//    regions: List<RegionEntry>,
-//    onSearchChange: (String) -> Unit,
-//    state: MapUiState,
-//    onAction: (MapAction) -> Unit
-//) {
-//    Column {
-//        if (showSearch) {
-//            GlassPanel(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .height(Dimens.searchBarHeight)
-//                    .padding(horizontal = Dimens.sm),
-//                color = lerp(MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.background, 0.5f),
-//                alpha = 1f
-//            ) {
-//                SearchBar(
-//                    search = searchQuery,
-//                    onSearchChange = onSearchChange
-//                )
-//            }
-//        }
-//
-//        LazyColumn(
-//            modifier = Modifier.fillMaxHeight(),
-//            horizontalAlignment = Alignment.CenterHorizontally,
-//            verticalArrangement = Arrangement.spacedBy(Dimens.xs)
-//        ) {
-//            itemsIndexed(regions) { _, region ->
-//                GlassPanel(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .height(Dimens.regionsHeight)
-//                        .padding(horizontal = Dimens.sm),
-//                    shape = MaterialTheme.shapes.medium,
-//                    color = lerp(
-//                        MaterialTheme.colorScheme.surface,
-//                        MaterialTheme.colorScheme.surface.copy(alpha = 0.1f),
-//                        0.5f
-//                    )
-//                ) {
-//                    Row(
-//                        modifier = Modifier
-//                            .fillMaxSize()
-//                            .padding(horizontal = Dimens.sm),
-//                        verticalAlignment = Alignment.CenterVertically
-//                    ) {
-//                        BasicText(
-//                            text = region.id,
-//                            modifier = Modifier.weight(0.2f),
-//                            style = MaterialTheme.typography.bodyLarge.copy(
-//                                color = MaterialTheme.colorScheme.onSurface
-//                            ),
-//                            autoSize = TextAutoSize.StepBased(
-//                                minFontSize = 4.sp,
-//                                maxFontSize = 28.sp
-//                            ),
-//                            maxLines = 1,
-//                            overflow = TextOverflow.Ellipsis
-//                        )
-//                        BasicText(
-//                            text = region.name,
-//                            modifier = Modifier.weight(0.7f),
-//                            style = MaterialTheme.typography.bodyLarge.copy(
-//                                color = MaterialTheme.colorScheme.onSurface
-//                            ),
-//                            autoSize = TextAutoSize.StepBased(
-//                                minFontSize = 4.sp,
-//                                maxFontSize = 28.sp
-//                            ),
-//                            maxLines = 3,
-//                            overflow = TextOverflow.Ellipsis
-//                        )
-//                        if (state.userRegionsSet.contains(region)) {
-//                            Box(
-//                                modifier = Modifier.weight(0.1f),
-//                            ) {
-//                                Icon(
-//                                    imageVector = Icons.Default.Done,
-//                                    contentDescription = "Done",
-//                                    tint = MaterialTheme.colorScheme.onSurface
-//                                )
-//                            }
-//                        } else {
-//                            ActionButton(
-//                                onClick = { onAction(MapAction.AddRegionClicked(region)) },
-//                                modifier = Modifier.weight(0.1f).aspectRatio(1f),
-//                                icon = Icons.Default.Add,
-//                                contentDescription = "Add region",
-//                                containerColor = Color.Transparent,
-//                                iconColor = MaterialTheme.colorScheme.onSurface
-//                            )
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
-//}
-//
-//@Composable
-//fun AddRegionDialog(
-//    region: RegionEntry,
-//    onDismiss: () -> Unit,
-//    onConfirm: () -> Unit
-//) {
-//    AlertDialog(
-//        onDismissRequest = onDismiss,
-//        title = { Text(text = "Добавление поездки: ${region.name}") },
-//        confirmButton = {
-//            TextButton(onClick = onConfirm) {
-//                Text("Подтвердить")
-//            }
-//        },
-//        dismissButton = {
-//            TextButton(onClick = onDismiss) {
-//                Text("Отмена")
-//            }
-//        }
-//    )
-//}

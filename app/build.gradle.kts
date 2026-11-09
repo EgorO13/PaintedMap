@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    kotlin("plugin.serialization") version "2.0.21"
 }
 
 android {
@@ -39,6 +40,15 @@ android {
 }
 
 dependencies {
+    implementation("androidx.navigation3:navigation3-runtime:1.2.0")
+    implementation("androidx.navigation3:navigation3-ui:1.2.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-navigation3:2.11.0")
+    implementation("androidx.compose.material3.adaptive:adaptive-navigation3:1.3.0")
+    implementation(libs.androidx.compose.animation)
+    implementation(libs.androidx.compose.animation.core)
+
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+
     implementation("androidx.navigation:navigation-compose:2.10.2")
     implementation(platform(libs.androidx.compose.bom))
     implementation("dev.chrisbanes.haze:haze:1.1.1")

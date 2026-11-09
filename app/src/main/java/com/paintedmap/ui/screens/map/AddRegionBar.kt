@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,23 +28,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import com.paintedmap.data.RegionEntry
 import com.paintedmap.ui.screens.map.MapAction
 import com.paintedmap.ui.screens.map.MapUiState
+import com.paintedmap.ui.screens.map.RegionsListState
 import com.paintedmap.ui.theme.Dimens
-
 
 @Composable
 fun AddRegionBar(
     searchQuery: String,
-    regions: List<RegionEntry>,
     onSearchChange: (String) -> Unit,
     state: MapUiState,
     onAction: (MapAction) -> Unit
 ) {
-    Column{
+    Column {
         GlassPanel(
             modifier = Modifier
                 .padding(Dimens.sm)
@@ -63,78 +63,97 @@ fun AddRegionBar(
             )
         }
 
-        LazyColumn(
-            modifier = Modifier.fillMaxHeight(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(Dimens.xs)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            contentAlignment = Alignment.TopCenter
         ) {
-            itemsIndexed(regions) { _, region ->
-                GlassPanel(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(Dimens.regionsHeight)
-                        .padding(horizontal = Dimens.sm)
-                        .clickable { onAction(MapAction.CircuitRegionClicked(region)) },
-                    shape = MaterialTheme.shapes.medium,
-                    color = lerp(
-                        MaterialTheme.colorScheme.surface,
-                        MaterialTheme.colorScheme.surface.copy(alpha = 0.1f),
-                        0.5f
+            when (val regionsState = state.regionsState) {
+                is RegionsListState.EmptySearch -> {
+                    Text(
+                        text = "Регион не найден",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(Dimens.md)
                     )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = Dimens.sm),
-                        verticalAlignment = Alignment.CenterVertically
+                }
+                is RegionsListState.Content -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(Dimens.xs)
                     ) {
-                        BasicText(
-                            text = region.id,
-                            modifier = Modifier.weight(0.2f),
-                            style = MaterialTheme.typography.bodyLarge.copy(
-                                color = MaterialTheme.colorScheme.onSurface
-                            ),
-                            autoSize = TextAutoSize.StepBased(
-                                minFontSize = 4.sp,
-                                maxFontSize = 28.sp
-                            ),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        BasicText(
-                            text = region.name,
-                            modifier = Modifier.weight(0.7f),
-                            style = MaterialTheme.typography.bodyLarge.copy(
-                                color = MaterialTheme.colorScheme.onSurface
-                            ),
-                            autoSize = TextAutoSize.StepBased(
-                                minFontSize = 4.sp,
-                                maxFontSize = 28.sp
-                            ),
-                            maxLines = 3,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        if (state.userRegionsSet.contains(region)) {
-                            Box(
-                                modifier = Modifier.weight(0.1f),
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Done,
-                                    contentDescription = "Done",
-                                    tint = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                        } else {
-                            ActionButton(
-                                onClick = { onAction(MapAction.AddRegionClicked(region)) },
+                        itemsIndexed(regionsState.list) { _, region ->
+                            GlassPanel(
                                 modifier = Modifier
-                                    .weight(0.1f)
-                                    .aspectRatio(1f),
-                                icon = Icons.Default.Add,
-                                contentDescription = "Add region",
-                                containerColor = Color.Transparent,
-                                iconColor = MaterialTheme.colorScheme.onSurface
-                            )
+                                    .fillMaxWidth()
+                                    .height(Dimens.regionsHeight)
+                                    .padding(horizontal = Dimens.sm)
+                                    .clickable { onAction(MapAction.CircuitRegionClicked(region)) },
+                                shape = MaterialTheme.shapes.medium,
+                                color = lerp(
+                                    MaterialTheme.colorScheme.surface,
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.1f),
+                                    0.5f
+                                )
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = Dimens.sm),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    BasicText(
+                                        text = region.id,
+                                        modifier = Modifier.weight(0.2f),
+                                        style = MaterialTheme.typography.bodyLarge.copy(
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        ),
+                                        autoSize = TextAutoSize.StepBased(
+                                            minFontSize = 4.sp,
+                                            maxFontSize = 28.sp
+                                        ),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    BasicText(
+                                        text = region.name,
+                                        modifier = Modifier.weight(0.7f),
+                                        style = MaterialTheme.typography.bodyLarge.copy(
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        ),
+                                        autoSize = TextAutoSize.StepBased(
+                                            minFontSize = 4.sp,
+                                            maxFontSize = 28.sp
+                                        ),
+                                        maxLines = 3,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    if (state.userRegionsSet.contains(region)) {
+                                        Box(
+                                            modifier = Modifier.weight(0.1f),
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Done,
+                                                contentDescription = "Done",
+                                                tint = MaterialTheme.colorScheme.onSurface
+                                            )
+                                        }
+                                    } else {
+                                        ActionButton(
+                                            onClick = { onAction(MapAction.AddRegionClicked(region)) },
+                                            modifier = Modifier
+                                                .weight(0.1f)
+                                                .aspectRatio(1f),
+                                            icon = Icons.Default.Add,
+                                            contentDescription = "Add region",
+                                            containerColor = Color.Transparent,
+                                            iconColor = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }

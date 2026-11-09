@@ -12,11 +12,18 @@ class UserRepository : IUserRepository{
         User ("Odinson", 8, "Thor", mutableSetOf<Int>(), mutableSetOf<Int>(6), mutableSetOf<RegionEntry>()),
         )
 
-    override fun findByNickname(userNickName : String) : User? {
+    override suspend fun findByNickname(userNickName : String) : User? {
         return users.find { it.userNickName == userNickName }
     }
 
-    override fun findById(userId : Int) : User? {
+    override suspend fun findById(userId : Int) : User? {
         return users.find { it.userId == userId }
+    }
+
+    override suspend fun searchAllUsers(query: String): List<User> {
+        return users.filter { user ->
+            user.userName.contains(query, ignoreCase = true) ||
+            user.userNickName.contains(query, ignoreCase = true)
+        }
     }
 }
