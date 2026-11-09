@@ -52,6 +52,7 @@ private data class ProjectedPoint(
 
 private data class Region(
     val id: String,
+    val fullName: String,
     val polygons: List<List<List<GeoPoint>>>,
     val centerLongitude: Double
 )
@@ -60,14 +61,15 @@ private data class Region(
 fun RussiaMap(
     modifier: Modifier = Modifier,
     visitedRegions: Set<RegionEntry> = emptySet(),
-    color: Color = Color.Blue
+    color: Color = Color.Blue,
+    circuitedRegion: RegionEntry?
 ) {
     val context = LocalContext.current
     val regions = remember { loadRegions(context) }
     var rotationDegrees by rememberSaveable { mutableFloatStateOf(0f) }
 
-    val visitedIds = remember(visitedRegions) {
-        visitedRegions.map { it.id }.toSet()
+    val visitedNames = remember(visitedRegions.size) {
+        visitedRegions.map { it.name.lowercase().trim() }.toSet()
     }
 
     RussiaGlobeMap(
@@ -78,13 +80,15 @@ fun RussiaMap(
                     .coerceIn(MIN_ROTATION_DEGREES, MAX_ROTATION_DEGREES)
             }
         },
-        visitedIds = visitedIds,
+        visitedIds = visitedNames,
         visitedColor = color,
         globeLongitude = GLOBE_LON,
         globeLatitude = GLOBE_LAT,
-        rotationDegrees = rotationDegrees
+        rotationDegrees = rotationDegrees,
+        circuitedRegion = circuitedRegion
     )
 }
+
 
 @Composable
 private fun RussiaGlobeMap(
@@ -94,7 +98,8 @@ private fun RussiaGlobeMap(
     visitedColor: Color,
     globeLongitude: Double,
     globeLatitude: Double,
-    rotationDegrees: Float
+    rotationDegrees: Float,
+    circuitedRegion: RegionEntry?
 ) {
     val globeColor = MaterialTheme.colorScheme.tertiary
 
@@ -154,9 +159,18 @@ private fun RussiaGlobeMap(
 
                 if (!hasVisiblePoint) continue
 
-                val fillColor = if (visitedIds.contains(region.id)) visitedColor else Color.LightGray
+                val currentRegionName = region.fullName.lowercase().trim()
+
+                val isVisited = visitedIds.contains(currentRegionName)
+                val isCircuited = currentRegionName == (circuitedRegion?.name?.lowercase()?.trim() ?: "")
+
+                val fillColor = if (isVisited) visitedColor else Color.LightGray
+                val circuitColor = if (isCircuited) Color.Red else Color.DarkGray
+                val strokeWeight = if (isCircuited) 5f else 1f
+
                 drawPath(path = path, color = fillColor)
-                drawPath(path = path, color = Color.DarkGray, style = Stroke(width = 1.1f))
+                drawPath(path = path, color = circuitColor, style = Stroke(width = strokeWeight))
+
             }
         }
     }
@@ -187,10 +201,16 @@ private fun loadRegions(context: Context): List<Region> {
     for (i in 0 until features.length()) {
         val feature = features.getJSONObject(i)
         val properties = feature.optJSONObject("properties")
+
         val regionId = feature.optString("id").takeIf { it.isNotBlank() }
             ?: properties?.optString("id")?.takeIf { it.isNotBlank() }
             ?: properties?.optString("name")?.takeIf { it.isNotBlank() }
             ?: "region_$i"
+
+        val fullName = properties?.optString("name_full")
+            ?: properties?.optString("name")
+            ?: ""
+
         val geometry = feature.getJSONObject("geometry")
         val geometryType = geometry.getString("type")
         val coordinates = geometry.getJSONArray("coordinates")
@@ -201,11 +221,19 @@ private fun loadRegions(context: Context): List<Region> {
         }
 
         if (polygons.isEmpty()) continue
-        result.add(Region(id = regionId, polygons = polygons, centerLongitude = calculateCenterLongitude(polygons)))
+        result.add(
+            Region(
+                id = regionId,
+                fullName = fullName,
+                polygons = polygons,
+                centerLongitude = calculateCenterLongitude(polygons)
+            )
+        )
     }
 
     return result
 }
+
 
 private fun calculateCenterLongitude(polygons: List<List<List<GeoPoint>>>): Double {
     var minLongitude = Double.POSITIVE_INFINITY

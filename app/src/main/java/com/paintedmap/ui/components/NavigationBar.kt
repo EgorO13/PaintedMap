@@ -38,9 +38,8 @@ fun NavigationContent(
             .height(Dimens.navigationBarHeight + systemNavigationPadding.calculateBottomPadding())
             .padding(horizontal = Dimens.xs)
             .padding(top = Dimens.xs, bottom = systemNavigationPadding.calculateBottomPadding() + Dimens.xs),
-        //shape = MaterialTheme.shapes.extraLarge,
+        shape = MaterialTheme.shapes.extraLarge,
         alpha = 1f,
-        color = MaterialTheme.colorScheme.surface
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
