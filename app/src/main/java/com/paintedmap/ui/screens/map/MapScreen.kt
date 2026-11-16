@@ -23,8 +23,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.paintedmap.data.IUserRepository
 import com.paintedmap.data.RussiaMap
+import com.paintedmap.domain.repository.UserRepository
 import com.paintedmap.ui.components.AddRegionBar
 import com.paintedmap.ui.components.AddRegionDialog
 import com.paintedmap.ui.components.GlassPanel
@@ -34,7 +34,7 @@ import com.paintedmap.ui.theme.Dimens
 @Composable
 fun MapScreenContainer(
     innerPadding: PaddingValues,
-    userRepository: IUserRepository
+    userRepository: UserRepository
 ) {
     val viewModel: MapViewModel = viewModel(
         factory = viewModelFactory {

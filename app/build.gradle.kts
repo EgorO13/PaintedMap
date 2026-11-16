@@ -40,6 +40,15 @@ android {
 }
 
 dependencies {
+    implementation(platform("io.ktor:ktor-bom:3.3.2"))
+    implementation("io.ktor:ktor-client-core")
+    implementation("io.ktor:ktor-client-cio")
+    implementation("io.ktor:ktor-client-content-negotiation")
+    implementation("io.ktor:ktor-serialization-kotlinx-json")
+    implementation("io.ktor:ktor-client-logging")
+    implementation("com.squareup.okhttp3:mockwebserver:5.3.2")
+    implementation(libs.androidx.compose.foundation)
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
     implementation("androidx.navigation3:navigation3-runtime:1.2.0")
     implementation("androidx.navigation3:navigation3-ui:1.2.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-navigation3:2.11.0")

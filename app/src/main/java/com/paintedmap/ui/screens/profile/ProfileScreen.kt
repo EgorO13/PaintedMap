@@ -1,12 +1,9 @@
 package com.paintedmap.ui.screens.profile
 
-import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,37 +14,36 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Share
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.paintedmap.data.IUserRepository
-import com.paintedmap.ui.components.ActionButton
+import com.paintedmap.domain.model.userMessage
+import com.paintedmap.domain.repository.UserRepository
 import com.paintedmap.ui.components.GlassPanel
 import com.paintedmap.ui.components.SearchBar
 import com.paintedmap.ui.theme.Dimens
+
 
 @Composable
 fun ProfileScreenContainer(
     userId: Int,
     innerPadding: PaddingValues,
-    userRepository: IUserRepository,
+    userRepository: UserRepository,
     onAuthorNavigate: (Int) -> Unit
 ) {
     val viewModel: ProfileViewModel = viewModel(
@@ -59,11 +55,11 @@ fun ProfileScreenContainer(
         }
     )
 
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-    LaunchedEffect(key1 = userId) {
-        viewModel.onAction(ProfileAction.SearchAuthorChanged(""))
+    LaunchedEffect(userId) {
+        viewModel.onAction(ProfileAction.Refresh)
     }
+
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     ProfileScreen(
         innerPadding = innerPadding,
@@ -84,7 +80,24 @@ fun ProfileScreen(
     state: ProfileUiState,
     onAction: (ProfileAction) -> Unit
 ) {
+    val gridState = rememberLazyGridState()
+
+    val shouldLoadMore by remember {
+        derivedStateOf {
+            val totalItems = gridState.layoutInfo.totalItemsCount
+            val lastVisible = gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            totalItems > 0 && lastVisible >= totalItems - 2
+        }
+    }
+
+    LaunchedEffect(shouldLoadMore) {
+        if (shouldLoadMore) {
+            onAction(ProfileAction.LoadNextPage)
+        }
+    }
+
     LazyVerticalGrid(
+        state = gridState,
         columns = GridCells.Fixed(2),
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
@@ -126,7 +139,6 @@ fun ProfileScreen(
             }
         }
 
-        // ВОТ ЭТОТ БЛОК КОДА ПОЛНОСТЬЮ ЗАМЕНИЛ СТАРЫЙ ВЫЗОВ itemsIndexed
         when (val authorsState = state.authorsState) {
             is AuthorsListState.Loading -> {
                 item(span = { GridItemSpan(maxLineSpan) }) {
@@ -166,30 +178,21 @@ fun ProfileScreen(
                     )
                 }
             }
-            is AuthorsListState.Base -> {
-                itemsIndexed(authorsState.list) { _, subscription ->
-                    GlassPanel(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(1f)
-                            .clickable { onAction(ProfileAction.AuthorClicked(subscription.id)) },
-                        color = lerp(MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.background, 0.5f),
-                    ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = subscription.name,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    }
+            is AuthorsListState.Error -> {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    NetworkErrorBlock(
+                        error = authorsState.error,
+                        message = authorsState.message,
+                        isRetryBlocked = state.isRetryBlocked,
+                        onRetry = { onAction(ProfileAction.RetryClicked) }
+                    )
                 }
             }
             is AuthorsListState.Content -> {
-                itemsIndexed(authorsState.list) { _, subscription ->
+                itemsIndexed(
+                    items = authorsState.list,
+                    key = { _, item -> item.id }
+                ) { _, subscription ->
                     GlassPanel(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -209,117 +212,30 @@ fun ProfileScreen(
                         }
                     }
                 }
-            }
-        }
-    }
-}
 
-
-@Composable
-fun ProfileBar(state: ProfileUiState) {
-    val context = LocalContext.current
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(Dimens.md),
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = state.userName,
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                )
-                Text(
-                    text = "@${state.userNickName}",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
-                    maxLines = 1,
-                )
-            }
-
-            ActionButton(
-                modifier = Modifier.size(44.dp),
-                onClick = {
-                    val link = "paintedmap://user/${state.userId}"
-                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        putExtra(Intent.EXTRA_TEXT, link)
+                if (authorsState.isLoadingNextPage) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(Dimens.sm),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(modifier = Modifier.size(28.dp))
+                        }
                     }
-                    context.startActivity(Intent.createChooser(shareIntent, "Поделиться профилем"))
-                },
-                icon = Icons.Rounded.Share,
-                contentDescription = "Поделиться профилем",
-                containerColor = Color.Transparent,
-                iconColor = MaterialTheme.colorScheme.onPrimary
-            )
-        }
+                }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = state.userRegionsAmount.toString(),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "регионы",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f),
-                    fontWeight = FontWeight.Normal
-                )
-            }
-
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = state.userSubAmount.toString(),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "подписчики",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f),
-                    fontWeight = FontWeight.Normal
-                )
-            }
-
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = state.userAuthorsAmount.toString(),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "подписки",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f),
-                    fontWeight = FontWeight.Normal
-                )
+                if (authorsState.paginationError != null) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        NetworkErrorBlock(
+                            error = authorsState.paginationError,
+                            message = authorsState.paginationError.userMessage(),
+                            isRetryBlocked = state.isRetryBlocked,
+                            onRetry = { onAction(ProfileAction.LoadNextPage) }
+                        )
+                    }
+                }
             }
         }
     }
