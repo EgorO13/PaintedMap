@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -17,7 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.paintedmap.ui.theme.Dimens
-
 
 @Composable
 fun SearchBar(
@@ -50,6 +50,7 @@ fun SearchBar(
             },
             textStyle = MaterialTheme.typography.bodyMedium,
             singleLine = true,
+            modifier = Modifier.weight(1f),
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent,
                 unfocusedContainerColor = Color.Transparent,
@@ -61,5 +62,18 @@ fun SearchBar(
                 cursorColor = MaterialTheme.colorScheme.onSurface
             )
         )
+
+        if (search.isNotEmpty()) {
+            ActionButton(
+                onClick = { onSearchChange("") },
+                modifier = Modifier
+                    .padding(horizontal = Dimens.sm)
+                    .size(24.dp),
+                icon = Icons.Default.Clear,
+                contentDescription = "Очистить",
+                containerColor = Color.Transparent,
+                iconColor = MaterialTheme.colorScheme.onSurface,
+            )
+        }
     }
 }

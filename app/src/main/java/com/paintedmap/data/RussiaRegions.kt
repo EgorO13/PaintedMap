@@ -35,7 +35,7 @@ val RussiaRegions = listOf(
     RegionEntry("27", "Хабаровский край"),
     RegionEntry("28", "Амурская область"),
     RegionEntry("29", "Архангельская область"),
-    RegionEntry("30", "Aстраханская область"),
+    RegionEntry("30", "Астраханская область"),
     RegionEntry("31", "Белгородская область"),
     RegionEntry("32", "Брянская область"),
     RegionEntry("33", "Владимирская область"),
