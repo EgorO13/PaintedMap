@@ -8,58 +8,56 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Blue,
-    onPrimary = White,
-    primaryContainer = BlackBlue,
-    onPrimaryContainer = UltraWhiteBlue,
+    primary = primaryDark,
+    onPrimary = onPrimaryDark,
+    primaryContainer = primaryContainerDark,
+    onPrimaryContainer = onPrimaryContainerDark,
 
     secondary = WhiteBlue,
-    onSecondary = UltraBlackBlue,
+    onSecondary = onSecondaryDark,
 
     tertiary = WhiteBlue,
 
     background = UltraBlackBlue,
-    onBackground = UltraWhiteBlue,
+    onBackground = onBackgroundDark,
 
     surface = BlackBlue,
-    onSurface = UltraWhiteBlue,
+    onSurface = onSurfaceDark,
     surfaceVariant = UltraBlackBlue,
     onSurfaceVariant = UltraWhiteBlue,
 
-    error = ErrorRed,
-    onError = Black,
+    error = errorDark,
+    onError = onErrorDark,
 
-    outline = Grey,
+    outline = outlineDark,
     scrim = Black
 )
 private val LightColorScheme = lightColorScheme(
-    primary = Blue,
-    onPrimary = White,
-    primaryContainer = UltraWhiteBlue,
-    onPrimaryContainer = BlackBlue,
+    primary = primaryLight,
+    onPrimary = onPrimaryLight,
+    primaryContainer = primaryContainerLight,
+    onPrimaryContainer = onPrimaryContainerLight,
 
-    secondary = WhiteBlue,
-    onSecondary = UltraBlackBlue,
+    secondary = secondaryLight,
+    onSecondary = onSecondaryLight,
 
-    tertiary = Blue,
+    tertiary = tertiaryLight,
 
-    background = UltraWhiteBlue,
-    onBackground = BlackBlue,
+    background = backgroundLight,
+    onBackground = onBackgroundLight,
 
     surface = WhiteBlue,
-    onSurface = BlackBlue,
-        surfaceVariant = UltraWhiteBlue,
+    onSurface = onSurfaceLight,
+    surfaceVariant = UltraWhiteBlue,
     onSurfaceVariant = BlackBlue,
 
-    error = ErrorRed,
-    onError = White,
+    error = errorLight,
+    onError = onErrorLight,
 
-    outline = Grey,
+    outline = outlineLight,
     scrim = Black
 )
 

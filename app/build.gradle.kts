@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    kotlin("plugin.serialization") version "2.0.21"
 }
 
 android {
@@ -39,11 +40,30 @@ android {
 }
 
 dependencies {
+    implementation(platform("io.ktor:ktor-bom:3.3.2"))
+    implementation("io.ktor:ktor-client-core")
+    implementation("io.ktor:ktor-client-cio")
+    implementation("io.ktor:ktor-client-content-negotiation")
+    implementation("io.ktor:ktor-serialization-kotlinx-json")
+    implementation("io.ktor:ktor-client-logging")
+    implementation("com.squareup.okhttp3:mockwebserver:5.3.2")
+    implementation(libs.androidx.compose.foundation)
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
+    implementation("androidx.navigation3:navigation3-runtime:1.2.0")
+    implementation("androidx.navigation3:navigation3-ui:1.2.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-navigation3:2.11.0")
+    implementation("androidx.compose.material3.adaptive:adaptive-navigation3:1.3.0")
+    implementation(libs.androidx.compose.animation)
+    implementation(libs.androidx.compose.animation.core)
+
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+
     implementation("androidx.navigation:navigation-compose:2.10.2")
     implementation(platform(libs.androidx.compose.bom))
     implementation("dev.chrisbanes.haze:haze:1.1.1")
     implementation("androidx.compose.material:material-icons-extended")
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.compose.foundation.layout)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.remote.creation.core)
