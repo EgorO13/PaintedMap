@@ -18,9 +18,10 @@ import io.ktor.http.Url
 import io.ktor.http.contentType
 import io.ktor.http.takeFrom
 import io.ktor.serialization.kotlinx.json.json
+import junit.framework.TestCase.assertNotNull
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -69,7 +70,7 @@ class NetworkUserRepositoryTest {
         server.enqueue(
             MockResponse()
                 .setResponseCode(200)
-                .addHeader("Content", "application/json")
+                .addHeader("Content-Type", "application/json")
                 .setBody("""{"items":[],"next_cursor":null}""")
         )
 
@@ -89,7 +90,7 @@ class NetworkUserRepositoryTest {
         server.enqueue(
             MockResponse()
                 .setResponseCode(200)
-                .addHeader("Content", "application/json")
+                .addHeader("Content-Type", "application/json")
                 .setBody(
                     """
                     {
@@ -104,7 +105,7 @@ class NetworkUserRepositoryTest {
         server.enqueue(
             MockResponse()
                 .setResponseCode(200)
-                .addHeader("Content", "application/json")
+                .addHeader("Content-Type", "application/json")
                 .setBody(
                     """
                     {
@@ -153,7 +154,7 @@ class NetworkUserRepositoryTest {
         server.enqueue(
             MockResponse()
                 .setResponseCode(409)
-                .addHeader("Content", "application/json")
+                .addHeader("Content-Type", "application/json")
                 .setBody("""{"code":"VERSION_CONFLICT"}""")
         )
         val result = repository.addUserRegion(userId = 1, regionId = "77")
@@ -187,7 +188,7 @@ class NetworkUserRepositoryTest {
         server.enqueue(
             MockResponse()
                 .setResponseCode(200)
-                .addHeader("Content", "application/json")
+                .addHeader("Content-Type", "application/json")
                 .setBody("""{"id": 1, "broken_json": """)
         )
         val result = repository.getUserById(1)
@@ -199,7 +200,7 @@ class NetworkUserRepositoryTest {
         server.enqueue(
             MockResponse()
                 .setResponseCode(200)
-                .addHeader("Content", "application/json")
+                .addHeader("Content-Type", "application/json")
                 .setBody("""{"id": 0, "nickname": "", "name": "Bad Name!"}""")
         )
         val result = repository.getUserById(1)
@@ -212,7 +213,7 @@ class NetworkUserRepositoryTest {
         server.enqueue(
             MockResponse()
                 .setResponseCode(200)
-                .addHeader("Content", "application/json")
+                .addHeader("Content-Type", "application/json")
                 .setBody("""{"id": 1, "nickname": "test", "name": "Test_User"}""")
         )
 
@@ -222,8 +223,6 @@ class NetworkUserRepositoryTest {
         assertEquals("Test_User", (result as LoadResult.Success).value.userName)
         assertEquals(2, server.requestCount)
     }
-
-// task: delay in test
 
     @Test
     fun testTimeout() = runTest {
@@ -247,7 +246,7 @@ class NetworkUserRepositoryTest {
         server.enqueue(
             MockResponse()
                 .setResponseCode(200)
-                .addHeader("Content", "application/json")
+                .addHeader("Content-Type", "application/json")
                 .setBodyDelay(1, TimeUnit.SECONDS)
                 .setBody("""{"id": 1, "nickname": "test", "name": "Test_User"}""")
         )
@@ -263,15 +262,18 @@ class NetworkUserRepositoryTest {
         server.enqueue(
             MockResponse()
                 .setResponseCode(200)
-                .addHeader("Content", "application/json")
+                .addHeader("Content-Type", "application/json")
                 .setBodyDelay(2, TimeUnit.SECONDS)
                 .setBody("""{"id": 1, "nickname": "test", "name": "Test_User"}""")
         )
 
-        val deferred = async {
+        val deferred = async(Dispatchers.IO) {
             repository.getUserById(1)
         }
-        delay(50)
+//        delay(50)
+        val recorded = server.takeRequest(1, TimeUnit.SECONDS)
+        assertNotNull(recorded)
+
         deferred.cancel()
 
         val cancelled = runCatching { deferred.await() }.exceptionOrNull()
